@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
@@ -148,7 +149,40 @@ public class PersonService {
 
     }
 
-    public String find(String url) throws ParseException {
+    public String findPlayers(String url) throws ParseException {
+
+        String object = null;
+
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://ballc-backend-api.herokuapp.com"));
+        String info = restTemplate.getForObject(url, String.class);
+
+        System.out.println(info);
+        //System.out.println(json.toString());
+        //System.out.println(json.get("first_name").toString());
+        /*
+        try{
+            restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://ballc-backend-api.herokuapp.com"));
+            String info = restTemplate.getForObject(url, String.class);
+
+            JSONParser parser = new JSONParser();
+            JSONObject json = (JSONObject) parser.parse(info);
+            String fullName = json.get("first_name").toString() + " " + json.get("last_name").toString();
+            String person_id = json.get("person_id").toString();
+
+            JSONObject player = new JSONObject();
+            player.put("label", fullName);
+            player.put("value", person_id);
+
+            object = player.toString();
+            System.out.println(player.toString());
+        }catch (HttpServerErrorException e){
+            System.out.println("finished");
+        }
+*/
+        return info;
+    }
+
+    public String findGoalType(String url) throws ParseException {
 
         String object = null;
 
@@ -159,13 +193,14 @@ public class PersonService {
         JSONObject json = (JSONObject) parser.parse(info);
         //System.out.println(json.toString());
 
-        String fullName = json.get("first_name").toString() + " " + json.get("last_name").toString();
-        String person_id = json.get("person_id").toString();
+        String goal_type = json.get("type").toString();
+        String goal_type_id = json.get("goal_type_id").toString();
         JSONObject player = new JSONObject();
-        player.put("full_name", fullName);
-        player.put("value", person_id);
+        player.put("label", goal_type);
+        player.put("value", goal_type_id);
 
-        object = player.toString();
+        System.out.println(player.toString());
+        //object = player.toString();
 
 
         return object;

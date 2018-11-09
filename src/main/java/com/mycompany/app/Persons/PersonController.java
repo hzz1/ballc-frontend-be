@@ -42,16 +42,6 @@ public class PersonController {
     */
 
     @CrossOrigin(origins = "*")
-    @GetMapping(value = "/coo")
-    public String showMyCookie(HttpSession httpSession) throws ParseException {
-
-        Object value = httpSession.getValue("username");
-        System.out.println(value.toString());
-        //String myCookie = myStore.sendingCookies();
-        return value.toString();
-    }
-
-    @CrossOrigin(origins = "*")
     @RequestMapping(value = "/regperson", method = RequestMethod.POST)
     public String createPerson(@RequestBody String user) throws IOException, ParseException {
 
@@ -373,39 +363,43 @@ public class PersonController {
     @RequestMapping(value = "/addrole", method = RequestMethod.POST)
     public String addRole(@RequestBody String user) throws ParseException {
 
-        try{
             System.out.println(user);
 
             JSONParser parser = new JSONParser();
             JSONObject json = (JSONObject) parser.parse(user);
 
-            Boolean coachcheck = Boolean.valueOf(json.get("coach").toString());
-            Boolean owner = Boolean.valueOf(json.get("owner").toString());
-            Boolean player = Boolean.valueOf(json.get("player").toString());
+        System.out.println(json.get("coach").toString());
 
+
+
+            //String coachcheck = json.get("coach").toString();
+            //String owner = json.get("owner").toString();
+            //Boolean player = Boolean.valueOf(json.get("player").toString());
+            //System.out.println(coachcheck);
             int personID =Integer.parseInt(json.get("person_id").toString());
-            int teamnID =Integer.parseInt(json.get("team_id").toString());
+            //int teamnID =Integer.parseInt(json.get("team_id").toString());
 
 
             String url = "/persons/" + personID;
             JSONObject json2 = new JSONObject();
             json2.put("person", personID);
-            //json2.put("team", teamnID);
+            json2.put("team", 1);
 
             //String person = sendData.getInfo(url);
             System.out.println(json2.toString());
-            if (coachcheck){
+            if (json.get("coach").toString().equals("true")){
                 System.out.println("he is a couch");
                 String url1 = "/coaches";
-                sendData.RegPerson(url1, json2.toString());
+                String res = sendData.RegPerson(url1, json2.toString());
+                System.out.println(res);
             }
-            if (owner){
+            if (json.get("owner").toString().equals("true")){
                 System.out.println("he is an owner");
                 String url1 = "/owners";
                 sendData.RegPerson(url1, json2.toString());
             }
 
-            if (player){
+            if (json.get("player").toString().equals("true")){
                 System.out.println("he is a player");
                 String url1 = "/players";
                 json2.put("normal_position", json.get("selected").toString());
@@ -416,13 +410,8 @@ public class PersonController {
             }
 
             return user;
-        }catch(NullPointerException e){
-            System.out.println("you left fields without filling");
-        }catch(NumberFormatException e){
-            System.out.println("you left fields without filling");
-        }
 
-return null;
+
     }
 
     @CrossOrigin(value = "*")
@@ -554,33 +543,129 @@ return null;
     }
 
     @CrossOrigin(value = "*")
-    @GetMapping("/playersformatch")
-    public String getPlayersForMatch() throws ParseException {
+    @GetMapping("/goaltypeformatch")
+    public String getGoalTypes() throws ParseException {
 
-        String result = sendData.getInfo("/players");
+
+        String result = sendData.getInfo("/goaltypes");
         JSONParser parser = new JSONParser();
         JSONArray json = (JSONArray) parser.parse(result);
 
-        JSONArray players = new JSONArray();
+        JSONArray goalslist = new JSONArray();
 
         for (Object obj : json){
             JSONObject jsonObj = (JSONObject) parser.parse(obj.toString());
-            int id = Integer.parseInt(jsonObj.get("person").toString());
-            String url = "/persons/" + id;
-            String player = sendData.find(url);
+            int id = Integer.parseInt(jsonObj.get("goal_type_id").toString());
 
-            JSONObject jsonPlayers = (JSONObject) parser.parse(player);
+            String goal_type = jsonObj.get("type").toString();
+            String goal_type_id = jsonObj.get("goal_type_id").toString();
+            JSONObject goals = new JSONObject();
+            goals.put("value", goal_type_id);
+            goals.put("label", goal_type);
+            System.out.println(goals.toString());
+            goalslist.add(goals);
+            //JSONObject jsonPlayers = (JSONObject) parser.parse(goal_types);
 
-            jsonPlayers.put("team", jsonObj.get("team").toString());
+            //jsonPlayers.put("team", jsonObj.get("team").toString());
             //System.out.println(jsonPlayers.toString());
-            players.add(jsonPlayers);
+            //players.add(jsonPlayers);
             //System.out.println(jsonObj.toString());
+
         }
 
-        System.out.println(players.toString());
+        System.out.println(goalslist.toString());
 
 
-        return players.toString();
+        return goalslist.toString();
     }
+
+
+    @CrossOrigin(value = "*")
+    @GetMapping("/playersformatch")
+    public String getPlayersForMatch() throws ParseException {
+
+
+        String result = sendData.getInfo("/playersinfo");
+        JSONParser parser = new JSONParser();
+        JSONArray json = (JSONArray) parser.parse(result);
+
+        JSONArray playerslist = new JSONArray();
+
+        for (Object obj : json){
+            JSONObject jsonObj = (JSONObject) parser.parse(obj.toString());
+            String fullName = jsonObj.get("first_name").toString() + " " + jsonObj.get("last_name").toString();
+            int person_id = Integer.parseInt(jsonObj.get("person_id").toString());
+            String team_id = jsonObj.get("team_id").toString();
+            JSONObject player = new JSONObject();
+            player.put("label", fullName);
+            player.put("value", person_id);
+            player.put("team", team_id);
+            playerslist.add(player);
+        }
+
+        System.out.println(playerslist.toString());
+
+
+        return playerslist.toString();
+    }
+
+    @CrossOrigin(value = "*")
+    @GetMapping("/teamsformatch")
+    public String getTeamsForMatch() throws ParseException {
+
+
+        String result = sendData.getInfo("/teams");
+        JSONParser parser = new JSONParser();
+        JSONArray json = (JSONArray) parser.parse(result);
+
+        JSONArray playerslist = new JSONArray();
+
+        for (Object obj : json){
+            JSONObject jsonObj = (JSONObject) parser.parse(obj.toString());
+            String teamName = jsonObj.get("teamName").toString();
+            int team_id = Integer.parseInt(jsonObj.get("team_id").toString());
+            JSONObject player = new JSONObject();
+            player.put("label", teamName);
+            player.put("value", team_id);
+            playerslist.add(player);
+        }
+
+        System.out.println(playerslist.toString());
+
+
+        return playerslist.toString();
+    }
+
+    @CrossOrigin(value = "*")
+    @GetMapping("/playersteam/{id}")
+    public String getPlayersForMatchinTeam(@PathVariable("id") String id) throws ParseException {
+
+
+        String result = sendData.getInfo("/playersinfo");
+        JSONParser parser = new JSONParser();
+        JSONArray json = (JSONArray) parser.parse(result);
+
+        JSONArray playerslist = new JSONArray();
+
+        for (Object obj : json){
+            JSONObject jsonObj = (JSONObject) parser.parse(obj.toString());
+            String fullName = jsonObj.get("first_name").toString() + " " + jsonObj.get("last_name").toString();
+            int person_id = Integer.parseInt(jsonObj.get("person_id").toString());
+            String team_id = jsonObj.get("team_id").toString();
+            if (team_id.equals(id)){
+                JSONObject player = new JSONObject();
+                player.put("label", fullName);
+                player.put("value", person_id);
+                player.put("team", team_id);
+                playerslist.add(player);
+            }
+        }
+
+        System.out.println(playerslist.toString());
+
+
+        return playerslist.toString();
+    }
+
 
 }

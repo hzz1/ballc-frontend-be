@@ -314,4 +314,197 @@ public class TeamController {
         return json.toString();
     }
 
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/result", method = RequestMethod.POST)
+    public String addResult(@RequestBody String user) throws ParseException {
+
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(user);
+        int homescore = Integer.parseInt(json.get("homescore").toString());
+        int awayscore = Integer.parseInt(json.get("awayscore").toString());
+        int hometeam = Integer.parseInt(json.get("hometeam").toString());
+        int awayteam = Integer.parseInt(json.get("awayteam").toString());
+        int match_id = Integer.parseInt(json.get("match_id").toString());
+        String result = null;
+
+        JSONObject homeresult = new JSONObject();
+        homeresult.put("score", homescore);
+        homeresult.put("matchId", match_id);
+        homeresult.put("teamId", hometeam);
+
+        JSONObject awayresult = new JSONObject();
+        awayresult.put("score", awayscore);
+        awayresult.put("matchId", match_id);
+        awayresult.put("teamId", awayteam);
+
+        if (homescore > awayscore){
+            homeresult.put("result", "Win");
+            awayresult.put("result", "Lose");
+        }else if (homescore < awayscore){
+            homeresult.put("result", "Lose");
+            awayresult.put("result", "Win");
+        }else if(homescore == awayscore){
+            homeresult.put("result", "Tie");
+            awayresult.put("result", "Tie");
+        }
+
+
+        System.out.println(homeresult.toString());
+        System.out.println(awayresult.toString());
+
+        sendData.RegTeam("/results", homeresult.toString());
+        sendData.RegTeam("/results", awayresult.toString());
+        //System.out.println(user);
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/addteam", method = RequestMethod.POST)
+    public String addTeam(@RequestBody String user){
+
+        sendData.RegTeam("/teams", user);
+        System.out.println(user);
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/updateteam", method = RequestMethod.POST)
+    public String updateTeam(@RequestBody String user) throws ParseException {
+
+        System.out.println(user);
+
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(user);
+
+        int id = Integer.parseInt(json.get("team_id").toString());
+        System.out.println(id);
+
+        json.remove("team_id");
+        System.out.println(json.toString());
+
+        String url = "/teams/" + id;
+        sendData.UpTeam(url, json.toString());
+
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/delteam", method = RequestMethod.POST)
+    public String delTeam(@RequestBody String user) throws ParseException {
+
+        System.out.println(user);
+
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(user);
+        String teamID = json.get("team_id").toString();
+        System.out.println(teamID);
+
+
+        String url = "/teams/" + teamID;
+        sendData.DelTeam(url);
+
+
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/addmatch", method = RequestMethod.POST)
+    public String addMatch(@RequestBody String user){
+
+        //sendData.RegTeam("/matches", user);
+
+        System.out.println(user);
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/addgoal", method = RequestMethod.POST)
+    public String addGoal(@RequestBody String user) throws ParseException {
+
+        //sendData.RegTeam("/matches", user);goaltypeformatch
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(user);
+
+        int match_id = Integer.parseInt(json.get("match_id").toString());
+        String homegoals = json.get("homegoals").toString();
+        String awaygoals = json.get("awaygoals").toString();
+        //System.out.println(homegoals);
+        //System.out.println(awaygoals);
+        JSONArray jsonhome = (JSONArray) parser.parse(homegoals);
+        for (Object objh: jsonhome){
+            JSONObject jsonh = (JSONObject) parser.parse(objh.toString());
+            JSONObject goal = (JSONObject) parser.parse(jsonh.toString());
+            JSONObject goaltype = (JSONObject) parser.parse(goal.get("goaltype").toString());
+            JSONObject player = (JSONObject) parser.parse(goal.get("player").toString());
+
+            JSONObject goalmatch = new JSONObject();
+            int goaltype_id = Integer.parseInt(goaltype.get("value").toString());
+            int player_id = Integer.parseInt(player.get("value").toString());
+            goalmatch.put("goalType", goaltype_id);
+            goalmatch.put("footballMatch", match_id);
+            goalmatch.put("player", player_id);
+
+            System.out.println(goalmatch.toString());
+            sendData.RegTeam("/matchgoals", goalmatch.toString());
+
+        }
+
+        JSONArray jsonaway = (JSONArray) parser.parse(awaygoals);
+        for (Object obja: jsonaway){
+            JSONObject jsona = (JSONObject) parser.parse(obja.toString());
+            JSONObject goal = (JSONObject) parser.parse(jsona.toString());
+            JSONObject goaltype = (JSONObject) parser.parse(goal.get("goaltype").toString());
+            JSONObject player = (JSONObject) parser.parse(goal.get("player").toString());
+
+
+            JSONObject goalmatch = new JSONObject();
+            int goaltype_id = Integer.parseInt(goaltype.get("value").toString());
+            int player_id = Integer.parseInt(player.get("value").toString());
+            goalmatch.put("goalType", goaltype_id);
+            goalmatch.put("footballMatch", match_id);
+            goalmatch.put("player", player_id);
+
+            System.out.println(goalmatch.toString());
+            sendData.RegTeam("/matchgoals", goalmatch.toString());
+        }
+        //System.out.println(json.toString());
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/addseason", method = RequestMethod.POST)
+    public String addSeason(@RequestBody String user){
+
+        //sendData.RegTeam("/seasons", user);
+        System.out.println(user);
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/addgoaltype", method = RequestMethod.POST)
+    public String addGoalType(@RequestBody String user){
+
+        sendData.RegTeam("/goaltypes", user);
+        System.out.println(user);
+        return user;
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/matchlist", method = RequestMethod.POST)
+    public String matchList(@RequestBody String user) throws ParseException {
+
+        String matchString = sendData.getInfo("/matches");
+        JSONParser parser = new JSONParser();
+        JSONObject matches = (JSONObject) parser.parse(matchString);
+
+        
+        System.out.println(user);
+        return user;
+    }
+
+
+
+
+
+
 }

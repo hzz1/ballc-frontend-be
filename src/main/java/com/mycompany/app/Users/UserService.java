@@ -51,19 +51,20 @@ public class UserService {
     }
 
     @CrossOrigin(origins = "*")
-    public String updateUser(String user){
+    public String updateUser(String user, String url){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(user, headers);
-        return restTemplate.exchange("http://ballc-backend-api.herokuapp.com/2", HttpMethod.PUT , entity, String.class).getBody();
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://ballc-frontend-usersapi.herokuapp.com/updateusers/"));
+        return restTemplate.exchange(url, HttpMethod.PUT , entity, String.class).getBody();
     }
 
     @CrossOrigin(origins = "*")
-    public String updateuser(String url, String user){
+    public String setAdmin(String url, String user){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(user ,headers);
-        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://ballc-backend-api.herokuapp.com/updateusers/"));
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://ballc-frontend-usersapi.herokuapp.com/updateusers/"));
         return restTemplate.exchange(url, HttpMethod.PUT , entity, String.class).getBody();
     }
 

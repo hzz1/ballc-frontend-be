@@ -103,15 +103,23 @@ public class UserController {
     }
 
     @CrossOrigin(value = "*")
-    @PutMapping("/updateuser")
-    public void updateUser(){
-        JSONObject json = new JSONObject();
-        json.put("username", "hzz1");
-        json.put("password", "c4416d8249c0902c993ae08a2254050d");
-        json.put("email", "hamza.hamzawi@outlook.com");
+    @RequestMapping(value = "/setadmin", method = RequestMethod.POST)
+    public String setAdmin(@RequestBody String user) throws ParseException {
 
-        String userinformation = json.toString();
-        String username = json.get("username").toString();
-        sendData.updateUser(userinformation);
+
+        System.out.println(user);
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObj = (JSONObject) parser.parse(user);
+
+        String url = jsonObj.get("user_id").toString();
+        jsonObj.remove("user_id");
+        System.out.println(url);
+        sendData.setAdmin(url,jsonObj.toString());
+
+        System.out.println(jsonObj.toString());
+        return "hhh";
+
     }
+
+
 }

@@ -10,8 +10,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
+import javax.servlet.http.HttpSession;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -31,7 +33,7 @@ public class SendData {
         for(Object myjson : json){
 
             JSONObject myJson = (JSONObject) parser.parse(myjson.toString());
-            String name = myJson.get("name").toString();
+            String name = myJson.get("username").toString();
             String pass = myJson.get("password").toString();
             if (username.equals(name) && password.equals(pass)){
             return true;
@@ -84,8 +86,10 @@ public class SendData {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(user, headers);
-        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://ballc-backend-api.herokuapp.com/updateusers/"));
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://ballc-frontend-usersapi.herokuapp.com/updateusers/"));
         return restTemplate.exchange(url, HttpMethod.PUT , entity, String.class).getBody();
     }
+
+
 
 }
