@@ -8,6 +8,12 @@ import org.json.simple.parser.ParseException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.Locale;
+
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -473,10 +479,17 @@ public class TeamController {
 
     @CrossOrigin(value = "*")
     @RequestMapping(value = "/addseason", method = RequestMethod.POST)
-    public String addSeason(@RequestBody String user){
+    public String addSeason(@RequestBody String user) throws ParseException, java.text.ParseException {
 
         //sendData.RegTeam("/seasons", user);
         System.out.println(user);
+        JSONParser parser = new JSONParser();
+        JSONObject seasonsObj = (JSONObject) parser.parse(user);
+        String start_date = seasonsObj.get("start_date").toString();
+        DateFormat format = new SimpleDateFormat("yyyy-mm-dd", Locale.ENGLISH);
+        Date date =  new Date(start_date);
+        String date1 = format.format(date);
+        System.out.println(date1);
         return user;
     }
 
@@ -490,17 +503,97 @@ public class TeamController {
     }
 
     @CrossOrigin(value = "*")
-    @RequestMapping(value = "/matchlist", method = RequestMethod.POST)
-    public String matchList(@RequestBody String user) throws ParseException {
+    @RequestMapping(value = "/matchlist", method = RequestMethod.GET)
+    public String matchList() throws ParseException {
 
         String matchString = sendData.getInfo("/matches");
         JSONParser parser = new JSONParser();
-        JSONObject matches = (JSONObject) parser.parse(matchString);
+        JSONArray matches = (JSONArray) parser.parse(matchString);
 
-        
-        System.out.println(user);
-        return user;
+        JSONArray matchesArr = new JSONArray();
+
+        for (Object objMatch : matches){
+            JSONObject match11 = (JSONObject) parser.parse(objMatch.toString());
+
+            int match_id = Integer.parseInt(match11.get("match_id").toString());
+            int home = Integer.parseInt(match11.get("home_team").toString());
+            int away = Integer.parseInt(match11.get("away_team").toString());
+            int season = Integer.parseInt(match11.get("season").toString());
+            String date = match11.get("match_date").toString();
+            JSONObject matchup = new JSONObject();
+
+            String urlhome = "/teams/" + home;
+            String matchHome = sendData.getInfo(urlhome);
+            JSONObject HomeTeam = (JSONObject) parser.parse(matchHome);
+
+            String urlaway = "/teams/" + away;
+            String matchAway = sendData.getInfo(urlaway);
+            JSONObject AwayTeam = (JSONObject) parser.parse(matchAway);
+
+            matchup.put("home_team", HomeTeam.get("teamName").toString());
+            matchup.put("away_team", AwayTeam.get("teamName").toString());
+            matchup.put("season", season);
+            matchup.put("date", date);
+
+            JSONArray resultsArr = new JSONArray();
+            String resultString = sendData.getInfo("/results");
+            JSONArray results = (JSONArray) parser.parse(resultString);
+
+            for (Object objRes : results){
+                JSONObject result1 = (JSONObject) parser.parse(objRes.toString());
+
+                int matchResult = Integer.parseInt(result1.get("footballMatch").toString());
+                int score = Integer.parseInt(result1.get("score").toString());
+                String resultName = result1.get("result").toString();
+                int team = Integer.parseInt(result1.get("team").toString());
+
+                if (matchResult == match_id){
+                    //resultsArr.add(result1);
+
+                    if (team == home){
+                        matchup.put("home_score", score);
+                        matchup.put("home_result", resultName);
+                    }else if (team == away){
+                        matchup.put("away_score", score);
+                        matchup.put("away_result", resultName);
+                    }
+
+                }
+
+            }
+
+            System.out.println(matchup.toString());
+            matchesArr.add(matchup);
+
+        }
+
+
+
+        //System.out.println(user);
+        return matchesArr.toString();
     }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/seasonslist", method = RequestMethod.GET)
+    public String seasons() throws ParseException {
+
+        String seasonsString = sendData.getInfo("/seasons");
+        JSONParser parser = new JSONParser();
+        JSONArray seasons = (JSONArray) parser.parse(seasonsString);
+        JSONArray seasonObjArr = new JSONArray();
+        for (Object obj : seasons){
+            JSONObject season = (JSONObject) parser.parse(obj.toString());
+            JSONObject seasonObj = new JSONObject();
+
+            seasonObj.put("label", season.get("name").toString());
+            seasonObj.put("value", season.get("season_id").toString());
+            seasonObjArr.add(seasonObj);
+        }
+        System.out.println(seasonObjArr.toString());
+        return seasonObjArr.toString();
+    }
+
+
 
 
 
