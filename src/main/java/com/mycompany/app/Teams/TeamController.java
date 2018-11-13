@@ -7,10 +7,12 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
@@ -22,6 +24,8 @@ public class TeamController {
     @JacksonInject
     RestTemplate restTemplate = new RestTemplate();
     TeamService sendData = new TeamService();
+    String test = null;
+
 
     @CrossOrigin(origins = "*")
     @RequestMapping(value = "/teams", method = RequestMethod.GET)
@@ -415,11 +419,94 @@ public class TeamController {
 
     @CrossOrigin(value = "*")
     @RequestMapping(value = "/addmatch", method = RequestMethod.POST)
-    public String addMatch(@RequestBody String user){
+    public String addMatch(@RequestBody String user) throws ParseException {
 
         //sendData.RegTeam("/matches", user);
 
-        System.out.println(user);
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(user);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        LocalDate localDate = LocalDate.parse(json.get("match_date").toString(), formatter);
+
+        String date = json.get("match_date").toString();
+        json.replace("match_date", date, localDate.toString());
+        String match_date = json.get("match_date").toString();
+        String season = json.get("season").toString();
+        String homeTeam = json.get("home_team").toString();
+        String awayTeam = json.get("away_team").toString();
+        JSONObject homeTeamObj = (JSONObject) parser.parse(homeTeam);
+        JSONObject seasonObj = (JSONObject) parser.parse(season);
+        JSONObject awayTeamObj = (JSONObject) parser.parse(awayTeam);
+
+        String positionsHome = json.get("positionsHome").toString();
+        String positionsAway = json.get("positionsAway").toString();
+
+        int seasonID = Integer.parseInt(seasonObj.get("value").toString());
+        int homeTeamID = Integer.parseInt(homeTeamObj.get("value").toString());
+        int awayTemID = Integer.parseInt(awayTeamObj.get("value").toString());
+        JSONObject matchObj = new JSONObject();
+        matchObj.put("match_date", match_date);
+        matchObj.put("season", seasonID);
+        matchObj.put("location", 1);
+        matchObj.put("home_team", homeTeamID);
+        matchObj.put("away_team", awayTemID);
+
+        //System.out.println(matchObj.toString());
+
+        String match = sendData.RegTeam("/matches", matchObj.toString());
+        JSONObject matchObject = (JSONObject) parser.parse(match);
+
+        int matchID = Integer.parseInt(matchObject.get("match_id").toString());
+        JSONArray positionsHomeArr = (JSONArray) parser.parse(positionsHome);
+        JSONArray positionsAwayArr = (JSONArray) parser.parse(positionsAway);
+
+        for (Object objaway : positionsAwayArr){
+            JSONObject awayJson = (JSONObject) parser.parse(objaway.toString());
+            String player = awayJson.get("player").toString();
+            JSONObject playerObj = (JSONObject) parser.parse(player);
+
+
+
+            int personID = Integer.parseInt(playerObj.get("value").toString());
+
+            JSONObject playerposition = new JSONObject();
+            playerposition.put("playerId", personID);
+            playerposition.put("matchId", matchID);
+            playerposition.put("position", awayJson.get("description").toString());
+            System.out.println(playerposition.toString());
+            //sendData.RegTeam("/matchpositions", playerposition.toString());
+
+
+
+
+        }
+
+        for (Object objhome : positionsHomeArr){
+            JSONObject homeJson = (JSONObject) parser.parse(objhome.toString());
+            String player = homeJson.get("player").toString();
+            JSONObject playerObj = (JSONObject) parser.parse(player);
+
+            System.out.println(playerObj.toString());
+
+            //System.out.println(homeJson.toString());
+
+            int personID = Integer.parseInt(playerObj.get("value").toString());
+            JSONObject playerposition = new JSONObject();
+            playerposition.put("playerId", personID);
+            playerposition.put("matchId", matchID);
+            playerposition.put("position", homeJson.get("description").toString());
+            System.out.println(playerposition.toString());
+            //sendData.RegTeam("/matchpositions", playerposition.toString());
+
+
+        }
+
+
+        //System.out.println(match);
+
+        //System.out.println(user);
         return user;
     }
 
@@ -437,11 +524,15 @@ public class TeamController {
         //System.out.println(homegoals);
         //System.out.println(awaygoals);
         JSONArray jsonhome = (JSONArray) parser.parse(homegoals);
+        //System.out.println(jsonhome.toString());
+
         for (Object objh: jsonhome){
             JSONObject jsonh = (JSONObject) parser.parse(objh.toString());
-            JSONObject goal = (JSONObject) parser.parse(jsonh.toString());
-            JSONObject goaltype = (JSONObject) parser.parse(goal.get("goaltype").toString());
-            JSONObject player = (JSONObject) parser.parse(goal.get("player").toString());
+            System.out.println(jsonh);
+            //System.out.println(goal.toString());
+
+            JSONObject goaltype = (JSONObject) parser.parse(jsonh.get("goal").toString());
+            JSONObject player = (JSONObject) parser.parse(jsonh.get("player").toString());
 
             JSONObject goalmatch = new JSONObject();
             int goaltype_id = Integer.parseInt(goaltype.get("value").toString());
@@ -453,14 +544,20 @@ public class TeamController {
             System.out.println(goalmatch.toString());
             sendData.RegTeam("/matchgoals", goalmatch.toString());
 
+
         }
+
 
         JSONArray jsonaway = (JSONArray) parser.parse(awaygoals);
+        //System.out.println(jsonaway.toString());
+
         for (Object obja: jsonaway){
+
+
             JSONObject jsona = (JSONObject) parser.parse(obja.toString());
-            JSONObject goal = (JSONObject) parser.parse(jsona.toString());
-            JSONObject goaltype = (JSONObject) parser.parse(goal.get("goaltype").toString());
-            JSONObject player = (JSONObject) parser.parse(goal.get("player").toString());
+
+            JSONObject goaltype = (JSONObject) parser.parse(jsona.get("goal").toString());
+            JSONObject player = (JSONObject) parser.parse(jsona.get("player").toString());
 
 
             JSONObject goalmatch = new JSONObject();
@@ -472,7 +569,9 @@ public class TeamController {
 
             System.out.println(goalmatch.toString());
             sendData.RegTeam("/matchgoals", goalmatch.toString());
+
         }
+
         //System.out.println(json.toString());
         return user;
     }
@@ -486,10 +585,31 @@ public class TeamController {
         JSONParser parser = new JSONParser();
         JSONObject seasonsObj = (JSONObject) parser.parse(user);
         String start_date = seasonsObj.get("start_date").toString();
-        DateFormat format = new SimpleDateFormat("yyyy-mm-dd", Locale.ENGLISH);
-        Date date =  new Date(start_date);
-        String date1 = format.format(date);
-        System.out.println(date1);
+        String end_date = seasonsObj.get("end_date").toString();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        LocalDate localDate = LocalDate.parse(start_date, formatter);
+
+        LocalDate localDate1 = LocalDate.parse(end_date, formatter);
+
+        seasonsObj.replace("start_date", localDate.toString());
+        seasonsObj.replace("end_date", localDate1.toString());
+
+        System.out.println(seasonsObj.toString());
+        sendData.RegTeam("/seasons", seasonsObj.toString());
+/*
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        SimpleDateFormat df1 = new SimpleDateFormat("YYYY-MM-dd", Locale.ENGLISH);
+
+        Date datestart =  new Date(start_date);
+        String dates1 = df.format(datestart);
+        System.out.println(dates1);
+
+        Date dateend =  new Date(seasonsObj.get("end_date").toString());
+        String datee1 = df.format(dateend);
+
+        System.out.println(datee1);
+*/
         return user;
     }
 
@@ -510,67 +630,57 @@ public class TeamController {
         JSONParser parser = new JSONParser();
         JSONArray matches = (JSONArray) parser.parse(matchString);
 
-        JSONArray matchesArr = new JSONArray();
+        String resultString = sendData.getInfo("/results");
+        JSONArray results = (JSONArray) parser.parse(resultString);
 
-        for (Object objMatch : matches){
-            JSONObject match11 = (JSONObject) parser.parse(objMatch.toString());
+        JSONArray finalResults = new JSONArray();
 
-            int match_id = Integer.parseInt(match11.get("match_id").toString());
-            int home = Integer.parseInt(match11.get("home_team").toString());
-            int away = Integer.parseInt(match11.get("away_team").toString());
-            int season = Integer.parseInt(match11.get("season").toString());
-            String date = match11.get("match_date").toString();
-            JSONObject matchup = new JSONObject();
+        for (Object matchObj : matches){
+            JSONObject match = (JSONObject) parser.parse(matchObj.toString());
+            int match_id = Integer.parseInt(match.get("match_id").toString());
+            int home_id = Integer.parseInt(match.get("home_team").toString());
+            int away_id = Integer.parseInt(match.get("away_team").toString());
+            JSONObject final_result = new JSONObject();
 
-            String urlhome = "/teams/" + home;
-            String matchHome = sendData.getInfo(urlhome);
-            JSONObject HomeTeam = (JSONObject) parser.parse(matchHome);
+            final_result.put("date", match.get("match_date").toString());
+            for (Object resultObj : results){
 
-            String urlaway = "/teams/" + away;
-            String matchAway = sendData.getInfo(urlaway);
-            JSONObject AwayTeam = (JSONObject) parser.parse(matchAway);
 
-            matchup.put("home_team", HomeTeam.get("teamName").toString());
-            matchup.put("away_team", AwayTeam.get("teamName").toString());
-            matchup.put("season", season);
-            matchup.put("date", date);
+                JSONObject result = (JSONObject) parser.parse(resultObj.toString());
 
-            JSONArray resultsArr = new JSONArray();
-            String resultString = sendData.getInfo("/results");
-            JSONArray results = (JSONArray) parser.parse(resultString);
+                System.out.println(result.toString());
 
-            for (Object objRes : results){
-                JSONObject result1 = (JSONObject) parser.parse(objRes.toString());
 
-                int matchResult = Integer.parseInt(result1.get("footballMatch").toString());
-                int score = Integer.parseInt(result1.get("score").toString());
-                String resultName = result1.get("result").toString();
-                int team = Integer.parseInt(result1.get("team").toString());
+                int match_result = Integer.parseInt(result.get("footballMatch").toString());
+                if (match_id == match_result) {
+                    int team = Integer.parseInt(result.get("team").toString());
+                    String url = "/teams/" + team;
+                    String teamNameString = sendData.getInfo(url);
+                    JSONObject team_name = (JSONObject) parser.parse(teamNameString);
 
-                if (matchResult == match_id){
-                    //resultsArr.add(result1);
 
-                    if (team == home){
-                        matchup.put("home_score", score);
-                        matchup.put("home_result", resultName);
-                    }else if (team == away){
-                        matchup.put("away_score", score);
-                        matchup.put("away_result", resultName);
+                    if (team == home_id) {
+                        final_result.put("home_team", team_name.get("teamName").toString());
+                        final_result.put("home_score", result.get("score").toString());
+                        final_result.put("home_result", result.get("result").toString());
+
+
+                    } else if (team == away_id) {
+                        final_result.put("away_team", team_name.get("teamName").toString());
+                        final_result.put("away_score", result.get("score").toString());
+                        final_result.put("away_result", result.get("result").toString());
                     }
 
+                    finalResults.add(final_result);
+
+
                 }
-
             }
-
-            System.out.println(matchup.toString());
-            matchesArr.add(matchup);
-
         }
 
 
-
         //System.out.println(user);
-        return matchesArr.toString();
+        return finalResults.toString();
     }
 
     @CrossOrigin(value = "*")
@@ -596,7 +706,29 @@ public class TeamController {
 
 
 
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/positions", method = RequestMethod.POST)
+    public RedirectView addpostions(@RequestBody String user){
 
+        test = user;
+        //sendData.RegTeam("/goaltypes", user);
+        //System.out.println(user);
+        return new RedirectView("/sendposition");
+    }
+
+    @CrossOrigin(value = "*")
+    @RequestMapping(value = "/sendposition", method = RequestMethod.GET)
+    public String getpostions(){
+
+        System.out.println(test);
+        String back = test;
+        test = null;
+        System.out.println(back);
+        System.out.println(test);
+        //sendData.RegTeam("/goaltypes", user);
+
+        return back;
+    }
 
 
 

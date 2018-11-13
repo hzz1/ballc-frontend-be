@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.ArrayList;
 
 @RestController
 @CrossOrigin(origins = "*")
-public class UserController {
+public class UsersController {
 
     @JacksonInject
     RestTemplate restTemplate = new RestTemplate();
@@ -29,7 +30,8 @@ public class UserController {
 
     @CrossOrigin(origins = "*")
     @RequestMapping(value = "/signup", method = RequestMethod.POST)
-    public String createUser(HttpServletResponse response, @RequestBody String user) throws IOException, ParseException, NoSuchAlgorithmException {
+    public String createUser(@RequestBody String user) throws IOException, ParseException, NoSuchAlgorithmException {
+
 
         JSONParser parser = new JSONParser();
         JSONObject json = (JSONObject) parser.parse(user);

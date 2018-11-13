@@ -650,7 +650,7 @@ public class PersonController {
         for (Object obj : json){
             JSONObject jsonObj = (JSONObject) parser.parse(obj.toString());
             String fullName = jsonObj.get("first_name").toString() + " " + jsonObj.get("last_name").toString();
-            int person_id = Integer.parseInt(jsonObj.get("person_id").toString());
+            int person_id = Integer.parseInt(jsonObj.get("player_id").toString());
             String team_id = jsonObj.get("team_id").toString();
             if (team_id.equals(id)){
                 JSONObject player = new JSONObject();

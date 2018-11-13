@@ -5,16 +5,18 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.servlet.view.RedirectView;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.net.HttpCookie;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+
+//import io.jsonwebtoken.Jwts;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -24,110 +26,89 @@ public class AuthController {
     RestTemplate restTemplate = new RestTemplate();
     SendData sendData = new SendData();
     MyCookieStore myStore = new MyCookieStore();
-    HttpCookie myCookie = new HttpCookie("name", null);
     String username = null;
     JSONArray json = new JSONArray();
 
 
     @CrossOrigin(origins = "*")
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    @ResponseBody
-    public RedirectView login(@RequestBody String user , Model model, HttpSession httpSession) throws ParseException, NoSuchAlgorithmException {
+    public String login(@RequestBody String user) throws ParseException, NoSuchAlgorithmException {
 
-        httpSession.setAttribute("username", null);
-        httpSession.setAttribute("admin", false);
-
-        System.out.println(user);
+        username = null;
 
         JSONParser parser = new JSONParser();
         JSONObject jsonObj = (JSONObject) parser.parse(user);
-        username = (String) jsonObj.get("username");
+        String name = (String) jsonObj.get("username");
         String password = (String) jsonObj.get("password");
-        System.out.println(username);
-
         String generatedPassord = sendData.hashPassword(password);
         jsonObj.replace("password", password, generatedPassord);
+        JSONObject tokenObj = new JSONObject();
+
+        tokenObj.put("token", "");
 
 
-        if(sendData.auth(username, generatedPassord) == false){
-            System.out.println(sendData.auth(username, generatedPassord));
+
+        if(sendData.auth(name, generatedPassord) == false){
+            System.out.println(sendData.auth(name, generatedPassord));
             System.out.println("User do not exist");
 
         }else{
 
-            System.out.println(myCookie.getValue());
-            httpSession.setAttribute("username", username);
-            System.out.println("welcome back    " + username);
+            String url = "http://ballc-frontend-usersapi.herokuapp.com/users/" + name;
+
+            String result = restTemplate.getForObject(url, String.class);
+
+            JSONObject usernObj = (JSONObject) parser.parse(result);
+            String name1 = usernObj.get("username").toString();
+            Boolean admin = Boolean.valueOf(usernObj.get("admin").toString());
+
+            tokenObj.put("username", name1);
+            tokenObj.put("admin", admin);
+            tokenObj.replace("token", "", "myToken");
+            //getAdmin();
+            System.out.println(tokenObj.toString());
+
 
         }
 
-        model.addAttribute("username", username);
-        return new RedirectView("/checkadmin");
+        //String url = "/checkadmin/" + username;
+
+        return tokenObj.toString();
+
     }
 
 
     @CrossOrigin(value = "*")
-    @RequestMapping(value = "/checkadmin", method = RequestMethod.GET)
-    public String getAdmin(HttpSession httpSession) throws ParseException {
+    @GetMapping("/check")
+    public String getAdmin(HttpSession mySession) throws ParseException {
 
-        System.out.println("this from checkadmin");
-        String myJsonObj = null;
-        final String uri = "http://ballc-frontend-usersapi.herokuapp.com/users";
-        String result = restTemplate.getForObject(uri, String.class);
+        //System.out.println("from admin check");
+        JSONObject tokenObj = new JSONObject();
 
-        JSONParser parser = new JSONParser();
-        json = (JSONArray) parser.parse(result);
+        String response = "nothing";
 
-        for(Object myjson : json){
+        if (username != null){
+            String url = "http://ballc-frontend-usersapi.herokuapp.com/users/";
 
-            JSONObject myJson = (JSONObject) parser.parse(myjson.toString());
-            Boolean admin = Boolean.valueOf(myJson.get("admin").toString());
+            String result = restTemplate.getForObject(url, String.class);
 
-            if (myJson.get("username").toString().equals(username)){
-                System.out.println(myJson.toString());
-                if (admin){
+            JSONParser parser = new JSONParser();
+            JSONObject jsonObj = (JSONObject) parser.parse(result);
+            response = jsonObj.toString();
+            System.out.println(response);
+            String name = jsonObj.get("username").toString();
+            Boolean admin = Boolean.valueOf(jsonObj.get("admin").toString());
 
+            tokenObj.put("username", name);
+            tokenObj.put("admin", admin);
+            tokenObj.replace("token", "", "myToken");
 
-                    System.out.println("he is an admin");
-                }else{
-                    System.out.println("he is not an admin");
-                }
-                myJsonObj = myJson.toString();
-                System.out.println(myJsonObj);
-
-            }
 
         }
-        System.out.println(myJsonObj);
 
-        return myJsonObj;
-    }
+        System.out.println(tokenObj.toString());
 
-    @CrossOrigin(origins = "*")
-    @GetMapping(value = "/coo")
-    public String showMyCookie(HttpSession httpSession) throws ParseException {
-
-        try{
-            Object value = httpSession.getValue("username");
-            System.out.println(value.toString());
-            //String myCookie = myStore.sendingCookies();
-            return value.toString();
-
-        }catch(NullPointerException e){
-            return "no session found please login";
-        }
-
-    }
-
-    @CrossOrigin(origins = "*")
-    @GetMapping(value = "/logout")
-    public String logout(HttpSession httpSession) throws ParseException {
-
-        Object value = httpSession.getValue("username");
-        //String myCookie = myStore.sendingCookies();
-        httpSession.setAttribute("username", null);
-
-        return "logout is done";
+        return tokenObj.toString();
     }
 
 

@@ -42,7 +42,7 @@ public class UserService {
         for(Object myjson : json){
 
             JSONObject myJson = (JSONObject) parser.parse(myjson.toString());
-            String name = myJson.get("name").toString();
+            String name = myJson.get("username").toString();
             if (username.equals(name)){
                 return false;
             }
