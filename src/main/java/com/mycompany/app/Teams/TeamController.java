@@ -144,6 +144,17 @@ public class TeamController {
     }
 
     @CrossOrigin(value = "*")
+    @RequestMapping(value ="/delmatch", method=RequestMethod.POST)
+    public String delMatch(@RequestBody String user){
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(result);
+        int match_id = Integer.parseInt(json.get("delmatch").toString);
+        String url = "/matches/" + match_id;
+        sendData.DelTeam(url);
+    return "hhh";
+    }
+
+    @CrossOrigin(value = "*")
     @GetMapping("/owner/{id}")
     public String getOwner(@PathVariable("id") String id) throws ParseException {
 

@@ -379,11 +379,11 @@ public class PersonController {
             int personID =Integer.parseInt(json.get("person_id").toString());
             //int teamnID =Integer.parseInt(json.get("team_id").toString());
 
-
+            int teamID = Integer.parseInt(json.get("team_id").toString());
             String url = "/persons/" + personID;
             JSONObject json2 = new JSONObject();
             json2.put("person", personID);
-            json2.put("team", 1);
+            json2.put("team", teamID);
 
             //String person = sendData.getInfo(url);
             System.out.println(json2.toString());
